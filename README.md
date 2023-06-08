@@ -38,3 +38,6 @@ TBD
 2. [Lab1 服务端和客户端部署以及玩家名称服务开发](https://github.com/aws-samples/amazon-ai-with-slack-bot/blob/main/Serverless-GameServer-Workshop/Docs/lab1_Server_Deploy_PlayerInfo_Service_Dev.md)
 3. [Lab2 匹配及对战服务开发](https://github.com/aws-samples/amazon-ai-with-slack-bot/blob/main/Serverless-GameServer-Workshop/Docs/lab2_MatchMaking_Battle_Dev.md)
 
+## Workshop 视频
+
+Workshop 视频可以参考 https://www.youtube.com/watch?v=M8QjodEuN5w&t=26s
