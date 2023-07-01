@@ -1,18 +1,12 @@
-[TOC]
+## Lab1 服务端部署以及玩家名称服务
 
+### 0. 开发部署说明
 
+<span style="color:red">**Workshop 中的业务代码仅做 Serverless 开发部署流程的功能性演示，非业务开发最佳实践，实际业务开发需综合考虑性能、可扩展性、可靠性、成本、安全**</span>
 
-## Lab1 Server Deployment and Player Service
+### 1. 服务端部署
 
-### 0. Development Instructions
-
-<span style="color:red">**The  code in the Workshop is only a functional demonstration of the serverless development. It is not a best practice for business development. The actual server development needs to comprehensively consider performance, scalability, reliability, cost, and security.**</span>
-
-
-
-### 1. Server Deployment
-
-Create a directory to store all codes and SAM template
+创建一个目录，用于存放后续所有服务端代码以及 SAM 的 template
 
 ```shell
 mkdir ~/Serverless-GameServer-Workshop
@@ -21,15 +15,15 @@ cd ~/Serverless-GameServer-Workshop
 
 
 
-#### 1.1 Create a HTTP hello world by SAM template
+#### 1.1 通过 SAM template 创建一个 HTTP 的 hello world
 
-Following HTTP services in the game will be developed based on the HTTP hello world
+后续的游戏内 HTTP 服务将基于此进行修改和扩展
 
 
 
-##### 1.1.1 Create SAM template 
+##### 1.1.1 创建 SAM template 文件
 
-Edite or create a new template.yaml file in the directory `~/Serverless-GameServer-Workshop`
+在`~/Serverless-GameServer-Workshop`目录下编辑或新建`template.yaml`文件，添加如下内容
 
 ~/Serverless-GameServer-Workshop/template.yaml
 
@@ -39,32 +33,34 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Serverless-GameServer-Workshop
 
+# 全局参数段
 Globals:
   Function:
-    Timeout: 300 # Lambda function timeout, second
+    Timeout: 300 # Lambda 函数执行超时时间，单位是秒
 
-# All resources will be defined in the SAM template
-# SAM will create a cloudformation to manage all resources
+# 资源段
+# 服务端所有的资源会在 SAM template 中定义
+# SAM 底层的原理是会创建一个 cloudformation 来进行资源的管理
 Resources:
-  PlayerMgr: # Resource name
-    Type: AWS::Serverless::Api # Resource type, APIGateway
-    Properties:
-      Name: Workshop-PlayerMgr # APIGATEWAY name
+  PlayerMgr: # 资源的名称
+    Type: AWS::Serverless::Api # 资源的类型，这里是 APIGateway
+    Properties: # 资源的属性配置
+      Name: Workshop-PlayerMgr # APIGATEWAY 的名称
       StageName: dev
 
   PlayerInfoFunction:
-    Type: AWS::Serverless::Function 
+    Type: AWS::Serverless::Function # 资源类型，此处是 Lambda
     Properties:
-      Description: 'Player Info'
-      CodeUri: player-manager/ # Lambda function code path
-      Handler: main.main_handler # Lambda function method
-      Runtime: python3.9 # Lambda runtime, support NodeJS, Python, Java, Golang
-      Architectures: # CPU arch
-        - arm64 # Recommand ARM
-      Events: # Lambda trigger
-        LambdaEvent: # Name
-          Type: Api 
-          Properties:
+      Description: 'Player Info' # 函数说明
+      CodeUri: player-manager/ # Lambda 函数代码所在的目录
+      Handler: main.main_handler # Lambda 函数处理的 method
+      Runtime: python3.9 # Lambda 执行代码的 runtime，支持 NodeJS, Python, Java, Golang 等
+      Architectures: # 底层运行代码的 CPU 架构
+        - arm64 # 一般代码没有特殊依赖推荐 ARM 架构，更高性价比
+      Events: # Lambda 事件触发配置
+        LambdaEvent: # 名称
+          Type: Api # 事件触发类型，此处为 APIGATEWAY
+          Properties: # 事件触发配置，以下表示通过刚刚配置的"PlayerMgr" APIGATEWAY 的 Endpoint "/create_user" 这个 path 访问时，触发 Lambda
             Path: /create_user
             Method: post
             RestApiId: !Ref PlayerMgr
@@ -72,15 +68,15 @@ Resources:
 
 
 
-##### 1.1.2 Init server code
+##### 1.1.2 创建服务端代码
 
-Create a directory `player-manager` in the same directory as template.yaml, whose name corresponds to `Resources.PlayerInfoFunction.Properties.CodeUri`
+在 template.yaml 相同目录下创建代码目录`player-manager`，名称对应于 template.yaml 里配置的 `Resources.PlayerInfoFunction.Properties.CodeUri`
 
 ```shell
 mkdir ~/Serverless-GameServer-Workshop/player-manager
 ```
 
-Create a `main.py` file in the `~/Serverless-GameServer-Workshop/player-manager` directory, and add a main_handler method in the `main.py` file. The name corresponds to the `Resources.PlayerInfoFunction.Properties configured in template.yaml .Handler`
+在 `~/Serverless-GameServer-Workshop/player-manager` 目录下创建 `main.py` 文件，并且在 main.py 文件中添加 main_handler 方法，名称对应于 template.yaml 里配置的 `Resources.PlayerInfoFunction.Properties.Handler`
 
 ~/Serverless-GameServer-Workshop/player-manager/main.py
 
@@ -89,18 +85,20 @@ import json
 
 def main_handler(event, context):
     try:
-        print(event) # Print event, you can find how event constructed
-        path = event.get('path') # Get path
-        res_msg = "Path '%s' not registered." % path
-        response = {'statusCode': 404, 'body': json.dumps({"msg": res_msg})}
+        print(event) # 通过打印event，可以在CloudWatch Log看到event的结构
+        path = event.get('path') # 获取path
+        res_msg = "Path '%s' not registered." % path # 默认返回信息
+        response = {'statusCode': 404, 'body': json.dumps({"msg": res_msg})} # 默认返回404
 
-        event_body = event.get('body')
-        event_body = json.loads(event_body if event_body is not None else '{}')
+        event_body = event.get('body') # 获取body
+        event_body = json.loads(event_body if event_body is not None else '{}') # 将body转换为dict
 
+        # 如果path为/create_user，对应于 template.yaml 中的 /create_user 路径
         if path == "/create_user":
             response = {'statusCode': 200, 'body': json.dumps({"msg": "create user success"})}
             return response
 
+        # 默认返回
         return response
     except Exception as err:
         return {'statusCode': 500}
@@ -108,51 +106,51 @@ def main_handler(event, context):
 
 
 
-##### 1.1.3 Code and file explanation
+##### 1.1.3 代码及文件解释
 
-* template.yaml defines all the resources and their configurations deployed on AWS, including APIGateway, Lambda, and so on
-* SAM (Serverless Application Model) transforms the resources defined in `template.yaml` into a CloudFormation template and deploys the resources using CloudFormation
-* we have defined two types of resources, APIGateway and Lambda, in the template.yaml above
-  * APIGateway serves as the entry point for client access through an HTTP URL and forwards requests to Lambda as events for processing
-  * Lambda is responsible for handling the actual business logic. The results returned by Lambda are then sent back to the client through APIGateway
+* template.yaml 定义所有部署在 aws 上的资源以及其配置，包括 APIGateway、Lambda 等
+* SAM 将 template.yaml 中定义的资源转化为 Cloudformation template，并通过 Cloudformation 进行资源部署
+* 在上面的 template.yaml 中定义了 APIGateway 和 Lambda 两种资源：
+  * APIGateway 用于提供客户端访问入口，HTTP URL，并把请求以事件（event）的形式传给 Lambda 进行处理
+  * Lambda 用于实际处理业务逻辑，return 的结果会由 APIGateway 返回给客户端
 
 
 
-##### 1.1.4 Deploying resources with SAM CLI
+##### 1.1.4 通过 SAM CLI 部署资源
 
-Switch to the directory where `template.yaml` is located.
+切换到 template.yaml 相同的目录下
 
 ```shell
 cd ~/Serverless-GameServer-Workshop
 ```
 
-Verify if `template.yaml` is valid.
+检查 template.yaml 是否正常
 
 ```shell
 sam validate
-# If template.yaml is valid, it will return "xxx is a valid SAM Template."
+# 如果 template.yaml 正常则会返回 "xxx is a valid SAM Template" 
 ```
 
-build & deploy code（**This method is not used for deployment in this workshop**）
+build & deploy 代码（**在正式环境中使用，本次 Workshop 不使用此方法进行部署**）
 
 ```shell
 sam build
 sam deploy --guided
 ```
 
-Sync the project to AWS for real-time code and architecture changes（****This method is used for deployment in this workshop for debugging process during the development stage****）
+sync project 实时同步代码和架构变更到 AWS（**本次 Workshop 使用此方法进行部署，用于演示开发阶段的调试过程**）
 
 ```shell
 sam sync --stack-name Serverless-GameServer-Workshop
-# Serverless-GameServer-Workshop is the name of Cloudformation Stack, check the status of CloudFormation resource creation in the next section.
-# To enable real-time synchronization of code and architecture changes to CloudFormation, you can add the '--watch' parameter. This ensures that any updates made to the code or the template.yaml file are immediately synchronized with the CloudFormation stack
+# Serverless-GameServer-Workshop 是 Cloudformation Stack 的名称，可以在下一节查看 Cloudformation 资源创建情况
+# 可以加上 --watch 参数，表示实时同步代码和架构（template.yaml）的变更到 Cloudformation
 ```
 
 
 
-##### 1.1.5 Check the results of resource creation
+##### 1.1.5 检查资源创建结果
 
-Check the CloudFormation stack created by SAM, APIGateway, and Lambda resources created by CloudFormation
+分别在控制台查看 SAM 创建的 Cloudformation，Cloudformation 创建的 APIGateway 和 Lambda
 
 **Cloudformation**
 
@@ -164,11 +162,11 @@ Check the CloudFormation stack created by SAM, APIGateway, and Lambda resources 
 
 ![image-20230523145157631](images/image-20230523145157631.png)
 
-Select the created APIGateway and view the APIGateway's stage.
+选择创建的 APIGateway，查看 APIGateway 的 Stage
 
 ![image-20230523145333159](images/image-20230523145333159.png)
 
-* You can view the created Stage "dev," path "/create_user," and the URL to invoke this APIGateway.
+* 可以看到已创建的 Stage "dev"、path "/create_user" 以及调用这个 APIGateway 的 URL
 
 
 
@@ -176,20 +174,20 @@ Select the created APIGateway and view the APIGateway's stage.
 
 ![image-20230525151347382](images/image-20230525151347382.png)
 
-select the Lambda and find the Triggers configuration
+选择创建的 Lambda，查看触发 Lambda 事件配置
 
 ![image-20230525151637990](images/image-20230525151637990.png)
 
-* Lambda function is triggered by invoking the APIGateway with the path "/create_user" that we created.
+* 可以看到这个 Lambda 函数是通过调用我们创建的 APIGateway /create_user 这个 path 来进行触发
 
 
 
-##### 1.1.5 Test the deployment of the server
+##### 1.1.5 测试服务端部署结果
 
-Retrieve the APIGateway URL from the APIGateway resource in section 1.1.4. Use curl command or Postman to test if the deployed HTTP server is functioning correctly.
+从 1.1.4 节的 APIGateway 资源处找到 APIGateway 的 URL，直接通过本地命令或 postman 来测试刚刚部署的 HTTP server 是否正常
 
 ```shell
-# Since the event registered in the Lambda function in template.yaml is specifically for the APIGateway post method, other methods will return a 403 Forbidden response. 
+# 因为在 template.yaml 中在 Lambda 处注册的 Event 是 APIGateway post，所以其他的 method 会 403 
 curl "https://aabbcc.execute-api.us-east-1.amazonaws.com/dev/create_user"
 {"message":"Missing Authentication Token"}%
 
@@ -199,28 +197,28 @@ curl -XPOST "https://aabbcc.execute-api.us-east-1.amazonaws.com/dev/create_user"
 
 
 
-##### 1.1.6 Check server log
+##### 1.1.6 查看服务端日志
 
-View the logs of the Lambda function `PlayerInfoFunction` by selecting the log group associated with it in CloudWatch Logs
+可以通过 CloudWatch Log 来查看 Lambda 执行时的日志，选择 PlayerInfoFunction 这个 Lambda 的 log group
 
 ![image-20230525152003753](images/image-20230525152003753.png)
 
-select the latest log stream
+选择最新的 log stream
 
 ![image-20230525152028036](images/image-20230525152028036.png)
 
-a complete Lambda invocation log
+一个完整的 Lambda 调用的日志
 
 ![image-20230525152117798](images/image-20230525152117798.png)
 
-* `START`: The Lambda function has started, showing the `RequestId` and `Version`.
-* `{'resource': '/create_user' .....}`: event content, printed in the lambda
-* `END`: The Lambda function has finished execution, showing the `RequestId`.
-* `REPORT`: Details about the execution duration, billed duration, memory size, and maximum memory used.
+* START RequestId：记录 Lambda 被调用的 ID 和时间
+* {'resource': '/create_user' .....}：代码中打印的 event 内容，这些数据是由 APIGateway 传到 Lambda 进行处理
+* END RequestId：记录 Lambda 调用结束的时间
+* REPORT RequestId：记录本次调用耗时、用于计费的耗时以及内存使用情况
 
 
 
-**In addition to viewing server logs through the console, you can also use the CLI to monitor server logs in real-time, similar to using the `tail -f` command to monitor logs written to a file during local development**
+**我们不仅可以通过控制台的方式来查看服务端日志，也可以通过 CLI 来实时查看服务端日志，类似于本地开发时将日志写入到文件后，用 tail -f 命令进行实时查看**
 
 ```shell
 aws logs tail /aws/lambda/Serverless-GameServer-Worksho-PlayerInfoFunction-1xgY5j45ekEX --follow
@@ -230,36 +228,36 @@ aws logs tail /aws/lambda/Serverless-GameServer-Worksho-PlayerInfoFunction-1xgY5
 
 
 
-So far, we have deployed an APIGateway + Lambda HTTP "Hello World" using the SAM template. We have also utilized CloudWatch Logs to view the server logs.
+至此，我们通过 SAM template 部署了一个 APIGateway + Lambda 的 HTTP hello world，并且通过 CloudWatch Log 来查看服务端日志
 
 
 
-#### 1.2 Modify the Hello World code to implement Player Creation
+#### 1.2 修改 Hello world 代码，实现用户创建功能
 
-##### 1.2.1 Edit template.yaml and add DynamoDB resources
+##### 1.2.1 修改 template.yaml，添加 Dynamodb 资源，sync template 到 AWS
 
-Modify the `template.yaml` file to add DynamoDB resources
+编辑 template.yaml 文件，在末尾添加 Dynamodb 的 resource
 
 ```yaml
 ...
   PlayerInfoTable:
-    Type: AWS::DynamoDB::Table
+    Type: AWS::DynamoDB::Table # 资源类型，此处是 Dynamodb table
     Properties:
-      AttributeDefinitions:
+      AttributeDefinitions: # Dynamodb 中的字段定义
         - AttributeName: "user_id"
-          AttributeType: "S" # user_id is string
-      KeySchema:
+          AttributeType: "S" # user_id 字段为 string
+      KeySchema: # Primary key 配置，这里使用单个 Partition key 做 Primary key
         - AttributeName: "user_id"
           KeyType: "HASH"
-      ProvisionedThroughput:
+      ProvisionedThroughput: # 预置 throughput
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       SSESpecification:
-        SSEEnabled: True # Server Side Encryption
-      TableName: "player_info" # DDB table name
+        SSEEnabled: True # Server Side Encryption 开启服务端加密
+      TableName: "player_info" # DDB table 名称
 ```
 
-Run `sam sync` to synchronize the resources to the cloud.
+执行 sam sync 同步资源到云上
 
 ```shell
 sam sync --stack-name Serverless-GameServer-Workshop
@@ -267,7 +265,7 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 
 
-##### 1.2.2 Check DynamoDB
+##### 1.2.2 检查 Dynamodb 资源创建结果
 
 ![image-20230523181043738](images/image-20230523181043738.png)
 
@@ -275,33 +273,33 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 
 
-##### 1.2.3 Edit the `~/Serverless-GameServer-Workshop/player-manager/main.py`  and add the logic for `create_user`
+##### 1.2.3 编辑 ~/Serverless-GameServer-Workshop/player-manager/main.py 代码，添加 create_user 的逻辑
 
-Add the global DynamoDB table resource before the `main_handler` method in the code
+在 main_handler 方法前添加全局的 Dynamodb table 资源
 
 ```python
 import json
 import boto3
 
-# Get DynamoDB resource with boto3.resource('dynamodb').
-# player_info represents the table name, which corresponds to Resources -> PlayerInfoTable -> Properties -> TableName in template.yaml
+# 通过boto3.resource('dynamodb')获取DynamoDB的资源
+# player_info 为表名对应于 template.yaml 中的 Resources -> PlayerInfoTable -> Properties -> TableName
 player_info_table = boto3.resource('dynamodb').Table("player_info")
 
 def main_handler(event, context):
   ...
 ```
 
-Add a function to check if the `user_id` provided by the client already exists.
+添加一个函数用于判断客户端传入的 user_id 是否已存在
 
 ```python
 import json
 import boto3
 
-# Get DynamoDB resource with boto3.resource('dynamodb').
-# player_info corresponds to Resources -> PlayerInfoTable -> Properties -> TableName in template.yaml
+# 通过boto3.resource('dynamodb')获取DynamoDB的资源
+# player_info 为表名对应于 template.yaml 中的 Resources -> PlayerInfoTable -> Properties -> TableName
 player_info_table = boto3.resource('dynamodb').Table("player_info")
 
-# check if the user_id exists
+# 判断user_id是否存在
 def getUserInfo(user_id):
     response = player_info_table.get_item(Key={"user_id": user_id})
     if "Item" in response:
@@ -313,16 +311,17 @@ def main_handler(event, context):
   ...
 ```
 
-Modify the `main_handler`  to write player info to DynamoDB.
+修改 main_handler 以实现玩家名称写入 Dynamodb
 
 ```python
 def main_handler(event, context):
     try:
-        print(event)
-        path = event.get('path')
-        method = event.get('httpMethod')
-        event_body = event.get('body')
-        event_body = json.loads(event_body if event_body is not None else '{}') # convert body to dict
+        print(event) # 通过打印event，可以在CloudWatch Log看到event的结构
+        path = event.get('path') # 获取path
+        method = event.get('httpMethod') # 获取method
+        event_body = event.get('body') # 获取body
+        event_body = json.loads(event_body if event_body is not None else '{}') # 将body转换为dict
+        # 如果path为/create_user，对应于 template.yaml 中的 /create_user 路径
         if path == "/create_user":
             if method == "POST":
                 if "user_id" in event_body and event_body["user_id"] != "":
@@ -338,7 +337,7 @@ def main_handler(event, context):
         return { 'statusCode': 500, 'body': json.dumps({"msg": str(err)}) }
 ```
 
-Run `sam sync` to synchronize the resources to the cloud.
+执行 sam sync 同步资源到云上
 
 ```shell
 sam sync --stack-name Serverless-GameServer-Workshop
@@ -346,58 +345,56 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 
 
-##### 1.2.4 Functional Test
+##### 1.2.4 测试代码运行
 
 ```shell
 curl -XPOST "https://aabbcc.execute-api.us-east-1.amazonaws.com/dev/create_user" -H 'Content-Type: application/json' -d '{"user_id":"test_user"}'
 {"msg": "An error occurred (AccessDeniedException) when calling the GetItem operation: User: arn:aws:sts::123456789:assumed-role/Serverless-GameServer-Wor-PlayerInfoFunctionRole-1CSMEMP2JLOJ4/Serverless-GameServer-Worksho-PlayerInfoFunction-1xgY5j45ekEX is not authorized to perform: dynamodb:GetItem on resource: arn:aws:dynamodb:us-east-1:123456789:table/player_info because no identity-based policy allows the dynamodb:GetItem action"}%
 ```
 
-The error log indicates that the Lambda function does not have the necessary permission to execute `dynamodb:GetItem`. You need to add the permission for the Lambda function to interact with AWS resources.
+可以看到错误日志为 Lambda 没有执行 dynamodb:GetItem 的权限，需要给 Lambda 添加操作 AWS 资源的权限
+
+（这里需解释一下 AWS 上的身份认证和权限管理 IAM）
 
 
 
-##### 1.2.5 Create IAM Role and associate with the lambda
+##### 1.2.5 创建 IAM Role，并将 Role 关联到 Lambda
 
-create role
+创建 role
 
 ![image-20230523190900263](images/image-20230523190900263.png)
 
-select AWS service for trusted entity type, and select Lambda for Use case
+trusted entity type 选择 AWS service，Use case 选择 Lambda
 
 ![image-20230523191040636](images/image-20230523191040636.png)
 
-`Administrator` permission does not adhere to the principle of least privilege, just for ease of demo here. 
-
-**It is recommended to set permissions based on the principle of least privilege in your environment**
-
-
+添加 Administrator 权限，此处 workshop 仅做演示，为后续 Lambda 操作其他 AWS 资源方便而直接赋 Administrator 权限，未满足最小权限原则，生产环境中请按最小权限原则进行设置
 
 ![image-20230523191146798](images/image-20230523191146798.png)
 
-set the  Role name "Workshop-Lambda-Role" 
+填入 Role name "Workshop-Lambda-Role" 进行创建
 
 ![image-20230523191428955](images/image-20230523191428955.png)
 
-get the ARN of the role we created just now
+创建完成后，找到刚刚创建的 Role 的资源标识 ARN
 
 ![image-20230523191533374](images/image-20230523191533374.png)
 
-Modify the `template.yaml` file to associate the `Workshop-Lambda-Role` with the Lambda
+修改 template.yaml 文件，将刚刚创建的 Workshop-Lambda-Role 关联到 Lambda
 
-* Replace `Role` with yours
+* 将 Role 资源改为自己创建的
 
 ```yaml
   PlayerInfoFunction:
-    Type: AWS::Serverless::Function
+    Type: AWS::Serverless::Function # 资源类型，此处是 Lambda
     Properties:
       ...
-      Role: "arn:aws:iam::123456789:role/Workshop-Lambda-Role"
-      Events:
+      Role: "arn:aws:iam::123456789:role/Workshop-Lambda-Role" # Lambda 执行时的权限
+      Events: # Lambda 事件触发配置
         ...
 ```
 
-Run `sam sync` to synchronize the resources to the cloud.
+执行 sam sync 同步资源到云上
 
 ```shell
 sam sync --stack-name Serverless-GameServer-Workshop
@@ -405,7 +402,7 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 
 
-##### 1.2.6 Functional Test
+##### 1.2.6 再次测试代码运行
 
 ```shell
 ~: curl -XPOST "https://aabbcc.execute-api.us-east-1.amazonaws.com/dev/create_user" -H 'Content-Type: application/json' -d '{"user_id":"test_user"}'
@@ -418,13 +415,13 @@ sam sync --stack-name Serverless-GameServer-Workshop
 {"msg": "create user failed: empty user_id"}%
 ```
 
-After granting the necessary permissions to the Lambda function, it can now execute successfully and perform read and write operations on DynamoDB.
+给 Lambda 赋上权限后，Lambda 可以正常执行，向 Dynamodb 进行读写
 
 
 
-##### 1.2.7 Check datas in the Dynamodb
+##### 1.2.7 查看 Dynamodb 中的数据
 
-Use the AWS CLI to view the data that was just written to DynamoDB.
+使用 aws cli 来查看 Dynamodb 中刚刚写入的数据
 
 ```shell
 ~: aws dynamodb scan --table-name player_info --no-cli-pager
