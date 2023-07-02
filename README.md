@@ -1,43 +1,29 @@
-## Serverless GameServer Workshop 介绍
+# Introduction
 
-本 Workshop 针对游戏服务端开发人员，主要介绍 AWS serverless 开发模式在游戏场景下的视线
+Welcome to the AWS Serverless GameServer workshop! In this workshop, we will explore the power of AWS serverless services to build a robust game server. By leveraging services such as API Gateway, Lambda, DynamoDB, SAM, and more, we will create a scalable and efficient game backend.
 
+During the workshop, you will learn how to deploy and manage serverless infrastructure using AWS SAM (Serverless Application Model) templates. We will start by setting up a basic HTTP "hello world" service and gradually extend it to handle player name services and other game-specific functionalities.
 
-## 什么是 Serverless 以及什么是 SAM(Serverless Application Model)
+Through hands-on exercises and step-by-step instructions, you will gain practical experience in developing serverless applications for game servers. We will cover topics like serverless deployment, API management, data storage with DynamoDB, and integrating different services to create a seamless gaming experience.
 
-TBD
+Whether you are a game developer or a serverless enthusiast, this workshop will provide you with valuable insights into building scalable and cost-effective game servers using AWS serverless services.
 
-## Workshop 中用到的服务
-
-TBD
-
-### APIGateway
-
-### Lambda
-
-### Dynamodb
-
-### SAM
-
-### IAM
-
-### CloudWatch Log
-
-
-## Serverless GameServer 架构
-
-<img src="./Docs/images/arch.jpeg" alt="arch" style="zoom:33%;" />
+Get ready to dive into the world of serverless game development and unleash the potential of AWS services. Let's build an exciting game server together!
 
 
 
-## Workshop 流程
+## Architecture Diagram
+
+![arch](Docs/images/arch.jpeg)
 
 
 
-1. [准备工作](https://github.com/aws-samples/serverless-gameserver-workshop/blob/main/Docs/1_prerequisite.md)
-2. [Lab1 服务端和客户端部署以及玩家名称服务开发](https://github.com/aws-samples/serverless-gameserver-workshop/blob/main/Docs/lab1_Server_Deploy_PlayerInfo_Service_Dev.md)
-3. [Lab2 匹配及对战服务开发](https://github.com/aws-samples/serverless-gameserver-workshop/blob/main/Docs/lab2_MatchMaking_Battle_Dev.md)
+## Workshop Docs
 
-## Workshop 视频
+https://github.com/aws-samples/serverless-gameserver-workshop/tree/main/Docs
 
-Workshop 视频可以参考 https://www.youtube.com/watch?v=M8QjodEuN5w&t=26s
+
+
+## Worshop Video
+
+https://www.youtube.com/watch?v=M8QjodEuN5w&t=26s
