@@ -10,3 +10,4 @@ Before we begin, please make sure you have the following prerequisites in place:
 4. wscat: To debug Websocket requests. [Install wscat](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-how-to-call-websocket-api-wscat.html)
 5. postman(optional): To debug HTTP and WebSocket requests. [Install postman](https://www.postman.com/downloads/)
 6. [Install Python3](https://www.python.org/downloads/)
+7. Download Game-Client from [Cloudfront](d1e47jk17frwes.cloudfront.net/Game-Client.zip)
