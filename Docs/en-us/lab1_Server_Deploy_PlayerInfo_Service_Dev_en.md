@@ -156,17 +156,17 @@ Check the CloudFormation stack created by SAM, APIGateway, and Lambda resources 
 
 **Cloudformation**
 
-![image-20230523145034421](images/image-20230523145034421.png)
+![image-20230523145034421](../images/image-20230523145034421.png)
 
 
 
 **APIGateway**
 
-![image-20230523145157631](images/image-20230523145157631.png)
+![image-20230523145157631](../images/image-20230523145157631.png)
 
 Select the created APIGateway and view the APIGateway's stage.
 
-![image-20230523145333159](images/image-20230523145333159.png)
+![image-20230523145333159](../images/image-20230523145333159.png)
 
 * You can view the created Stage "dev," path "/create_user," and the URL to invoke this APIGateway.
 
@@ -174,11 +174,11 @@ Select the created APIGateway and view the APIGateway's stage.
 
 **Lambda**
 
-![image-20230525151347382](images/image-20230525151347382.png)
+![image-20230525151347382](../images/image-20230525151347382.png)
 
 select the Lambda and find the Triggers configuration
 
-![image-20230525151637990](images/image-20230525151637990.png)
+![image-20230525151637990](../images/image-20230525151637990.png)
 
 * Lambda function is triggered by invoking the APIGateway with the path "/create_user" that we created.
 
@@ -203,15 +203,15 @@ curl -XPOST "https://aabbcc.execute-api.us-east-1.amazonaws.com/dev/create_user"
 
 View the logs of the Lambda function `PlayerInfoFunction` by selecting the log group associated with it in CloudWatch Logs
 
-![image-20230525152003753](images/image-20230525152003753.png)
+![image-20230525152003753](../images/image-20230525152003753.png)
 
 select the latest log stream
 
-![image-20230525152028036](images/image-20230525152028036.png)
+![image-20230525152028036](../images/image-20230525152028036.png)
 
 a complete Lambda invocation log
 
-![image-20230525152117798](images/image-20230525152117798.png)
+![image-20230525152117798](../images/image-20230525152117798.png)
 
 * `START`: The Lambda function has started, showing the `RequestId` and `Version`.
 * `{'resource': '/create_user' .....}`: event content, printed in the lambda
@@ -226,7 +226,7 @@ a complete Lambda invocation log
 aws logs tail /aws/lambda/Serverless-GameServer-Worksho-PlayerInfoFunction-1xgY5j45ekEX --follow
 ```
 
-![image-20230523182956729](images/image-20230523182956729.png)
+![image-20230523182956729](../images/image-20230523182956729.png)
 
 
 
@@ -269,9 +269,9 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 ##### 1.2.2 Check DynamoDB
 
-![image-20230523181043738](images/image-20230523181043738.png)
+![image-20230523181043738](../images/image-20230523181043738.png)
 
-![image-20230523181401038](images/image-20230523181401038.png)
+![image-20230523181401038](../images/image-20230523181401038.png)
 
 
 
@@ -361,11 +361,11 @@ The error log indicates that the Lambda function does not have the necessary per
 
 create role
 
-![image-20230523190900263](images/image-20230523190900263.png)
+![image-20230523190900263](../images/image-20230523190900263.png)
 
 select AWS service for trusted entity type, and select Lambda for Use case
 
-![image-20230523191040636](images/image-20230523191040636.png)
+![image-20230523191040636](../images/image-20230523191040636.png)
 
 `Administrator` permission does not adhere to the principle of least privilege, just for ease of demo here. 
 
@@ -373,15 +373,15 @@ select AWS service for trusted entity type, and select Lambda for Use case
 
 
 
-![image-20230523191146798](images/image-20230523191146798.png)
+![image-20230523191146798](../images/image-20230523191146798.png)
 
 set the  Role name "Workshop-Lambda-Role" 
 
-![image-20230523191428955](images/image-20230523191428955.png)
+![image-20230523191428955](../images/image-20230523191428955.png)
 
 get the ARN of the role we created just now
 
-![image-20230523191533374](images/image-20230523191533374.png)
+![image-20230523191533374](../images/image-20230523191533374.png)
 
 Modify the `template.yaml` file to associate the `Workshop-Lambda-Role` with the Lambda
 
@@ -508,7 +508,7 @@ We have added a `DeleteUserEvent` in the `Events` section of the `PlayerInfoFunc
 
 Check the updated configuration on the console.
 
-![image-20230525152842298](images/image-20230525152842298.png)
+![image-20230525152842298](../images/image-20230525152842298.png)
 
 
 
@@ -545,11 +545,11 @@ You just need to configure the APIGateway URL deployed by SAM in the previous st
 
 Start a HTTP server in the GameClient directory, please refer to the "Getting Started" section for GameClient download.
 
-![image-20230525193701773](images/image-20230525193701773.png)
+![image-20230525193701773](../images/image-20230525193701773.png)
 
 access localhost:8000/cj.html
 
- <img src="images/image-20230525194525012.png" alt="image-20230525194525012" style="zoom:33%;" />
+ <img src="../images/image-20230525194525012.png" alt="image-20230525194525012" style="zoom:33%;" />
 
 
 
@@ -557,7 +557,7 @@ access localhost:8000/cj.html
 
 Usually, game clients get serverlist file through a HTTP service. However, we configure our server addresses manually for demonstrate.
 
- <img src="images/image-20230525195011507.png" alt="image-20230525195011507" style="zoom:33%;" />
+ <img src="../images/image-20230525195011507.png" alt="image-20230525195011507" style="zoom:33%;" />
 
 
 
@@ -577,7 +577,7 @@ Click on the square on the right to confirm. At this point, the client will writ
 
 Enter the player's name, click on the square on the right to confirm
 
- <img src="images/image-20230525195952090.png" alt="image-20230525195952090" style="zoom:33%;" />
+ <img src="../images/image-20230525195952090.png" alt="image-20230525195952090" style="zoom:33%;" />
 
 **After clicking on the square to confirm, the client will:**
 
@@ -589,7 +589,7 @@ Enter the player's name, click on the square on the right to confirm
 
 No response received. Open the developer console to view the runtime logs.
 
-<img src="images/image-20230525200132808.png" alt="image-20230525200132808" style="zoom:50%;" />
+<img src="../images/image-20230525200132808.png" alt="image-20230525200132808" style="zoom:50%;" />
 
 It seems that the server is blocking requests from the local HTML5 client due to CORS (Cross-Origin Resource Sharing) restrictions.
 
@@ -702,13 +702,13 @@ sam sync --stack-name Serverless-GameServer-Workshop
 
 Player Creation
 
- <img src="images/image-20230526004042673.png" alt="image-20230526004042673" style="zoom:33%;" />
+ <img src="../images/image-20230526004042673.png" alt="image-20230526004042673" style="zoom:33%;" />
 
 
 
 Player Deletion
 
- <img src="images/image-20230526003938762.png" alt="image-20230526003938762" style="zoom:33%;" />
+ <img src="../images/image-20230526003938762.png" alt="image-20230526003938762" style="zoom:33%;" />
 
 
 
