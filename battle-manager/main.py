@@ -117,7 +117,14 @@ def main_handler(event, context):
             return {'statusCode': 400}
 
         if route_key == 'attack':
-            print('test attack')
+            # get battle info from connection_id
+            user_id, room_name, peer_player_id = battleMgrPrecheck(connection_id)
+            # get connection_id of peer player id
+            connection_id = getConnIDFromUserID(peer_player_id)
+            # send attack
+            message = '{"action":"attacked", "data":"FREEZE"}'
+            server_response(connection_id, message)
+            print("[handle_attack] Player be attacked. attacker_id=%s, victim_id=%s, room_name=%s." % (user_id, peer_player_id, room_name))
             return {'statusCode': 200}
 
         if route_key == 'die':
