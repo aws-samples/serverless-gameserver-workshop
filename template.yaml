@@ -87,6 +87,7 @@ Resources:
       StageName: dev
       Description: "dev env"
       ApiId: !Ref MainEntry
+      AutoDeploy: true
 
   MainServerFunction:
     Type: AWS::Serverless::Function
