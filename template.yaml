@@ -33,3 +33,13 @@ Resources:
             Method: post
             RestApiId: !Ref PlayerMgr
 
+#------ Show outputs of resources ------#
+Outputs:
+  PlayerMgrURI:
+    Description: "API Gateway endpoint URL for PlayerMgr"
+    Value: !Join [ '',
+      [
+        'https://', !Ref PlayerMgr, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/dev', ' ',
+        '[create_user]'
+      ]
+    ]
