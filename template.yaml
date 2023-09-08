@@ -33,6 +33,22 @@ Resources:
             Method: post
             RestApiId: !Ref PlayerMgr
 
+  PlayerInfoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "user_id"
+          AttributeType: "S" # user_id is string
+      KeySchema:
+        - AttributeName: "user_id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: True # Server Side Encryption
+      TableName: "player_info" # DDB table name
+
 #------ Show outputs of resources ------#
 Outputs:
   PlayerMgrURI:
