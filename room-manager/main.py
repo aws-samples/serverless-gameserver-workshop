@@ -1,5 +1,6 @@
 import json
 import boto3
+import os
 
 main_server_table = boto3.resource('dynamodb').Table('main_server')
 common_resources_table = boto3.resource('dynamodb').Table('common_resources')
