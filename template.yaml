@@ -181,6 +181,97 @@ Resources:
         SSEEnabled: True
       TableName: "main_server"
 
+  RoomMgrFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 'Battle room service'
+      CodeUri: room-manager/
+      Handler: main.main_handler
+      Runtime: python3.9
+      Architectures:
+        - arm64
+      Policies:
+        - AmazonDynamoDBFullAccess
+
+  # Associate APIGateway with Lambda
+  RoomMgrIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MainEntry
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join
+        - ''
+        - - 'arn:'
+          - !Ref AWS::Partition
+          - ':apigateway:'
+          - !Ref AWS::Region
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt RoomMgrFunction.Arn
+          - '/invocations'
+
+  JoinRoomRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "joinroom"
+      AuthorizationType: NONE
+      OperationName: JoinRoomRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref RoomMgrIntegration
+
+  ExitRoomRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "exitroom"
+      AuthorizationType: NONE
+      OperationName: ExitRoomRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref RoomMgrIntegration
+
+  DestroyRoomRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "destroyroom"
+      AuthorizationType: NONE
+      OperationName: DestroyRoomRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref RoomMgrIntegration
+
+  # Allow APIGateway to invoke Lambda
+  RoomMgrPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MainEntry
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RoomMgrFunction
+      Principal: apigateway.amazonaws.com
+
+  # Data store
+  CommonResourceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "resource_name"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "resource_name"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: True
+      TableName: "common_resources"
+
 #------ Show outputs of resources ------#
 Outputs:
   PlayerMgrURI:
