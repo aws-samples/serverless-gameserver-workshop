@@ -34,6 +34,12 @@ Resources:
             Path: /create_user
             Method: post
             RestApiId: !Ref PlayerMgr
+        DeleteUserEvent:
+          Type: Api
+          Properties:
+            Path: /delete_user
+            Method: post
+            RestApiId: !Ref PlayerMgr
 
   PlayerInfoTable:
     Type: AWS::DynamoDB::Table
