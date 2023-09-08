@@ -125,7 +125,14 @@ def main_handler(event, context):
             return {'statusCode': 200}
 
         if route_key == 'syncscore':
-            print('test syncscore')
+            score = event_body["score"]
+            user_id, room_name, peer_player_id = battleMgrPrecheck(connection_id)
+            in_battle_score = "%s_in_battle_score" % user_id
+            common_resources_table.put_item(Item={'resource_name': in_battle_score, 'score': score})
+            peer_connection_id = getConnIDFromUserID(peer_player_id)
+            message = '{"action":"player_syncscore", "data":%d}' % score
+            server_response(peer_connection_id, message)
+            print("[handle_syncscore]. user_id=%s, room_name=%s, current_score=%d." % (user_id, room_name, score))
             return {'statusCode': 200}
 
     except Exception as err:
