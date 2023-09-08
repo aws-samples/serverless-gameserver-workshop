@@ -128,8 +128,23 @@ def main_handler(event, context):
             return {'statusCode': 200}
 
         if route_key == 'die':
-            print('test die')
-            return {'statusCode': 200}
+            user_id, room_name, peer_player_id = battleMgrPrecheck(connection_id)
+            in_battle_die = "%s_in_battle_die" % user_id
+            common_resources_table.put_item(Item={'resource_name': in_battle_die, 'die': 1})
+            peer_connection_id = getConnIDFromUserID(peer_player_id)
+            item_response = common_resources_table.get_item(Key={'resource_name': "%s_in_battle_die" % peer_player_id})
+            if 'Item' not in item_response:
+                peer_connection_id = getConnIDFromUserID(peer_player_id)
+                message = '{"action":"player_died", "data":"%s"}' % user_id
+                server_response(peer_connection_id, message)
+                print("[handle_die] Player died. died_user_id=%s, room_name=%s." % (user_id, room_name))
+                return {'statusCode': 200}
+            else:
+                message = '{"action":"player_died", "data":"all"}'
+                server_response(peer_connection_id, message)
+                print("[handle_die] Player all died, start battle settlement.")
+                battle_settlement([user_id, peer_player_id], room_name)
+                return {'statusCode': 200}
 
         if route_key == 'syncscore':
             score = event_body["score"]
