@@ -289,6 +289,9 @@ Resources:
       Policies:
         - AmazonDynamoDBFullAccess
         - AmazonAPIGatewayInvokeFullAccess
+      Environment:
+        Variables:
+          MainServerAPIUrlPrefix: !Ref MainEntry
 
   BattleMgrIntegration:
     Type: AWS::ApiGatewayV2::Integration
