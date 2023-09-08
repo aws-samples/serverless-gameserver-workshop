@@ -72,6 +72,22 @@ Resources:
       TableName: "player_info" # DDB table name
 
   ###--- Websocket Service ---###
+  # APIGateway of MainServer Websocket
+  MainEntry:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Workshop-MainEntry
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  # Stage of the APIGateway
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: dev
+      Description: "dev env"
+      ApiId: !Ref MainEntry
+
   MainServerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -83,6 +99,61 @@ Resources:
         - arm64
       Policies:
         - AmazonDynamoDBFullAccess
+
+  # Integration API Gateway with Lambda
+  MainServerIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MainEntry
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join
+        - ''
+        - - 'arn:'
+          - !Ref AWS::Partition
+          - ':apigateway:'
+          - !Ref AWS::Region
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt MainServerFunction.Arn
+          - '/invocations'
+
+  # Default APIGateway route
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "$default"
+      AuthorizationType: NONE
+      OperationName: DefaultRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref MainServerIntegration
+
+  # route on connect
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "$connect"
+      AuthorizationType: NONE
+      OperationName: ConnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref MainServerIntegration
+
+  # route on disconnect
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "$disconnect"
+      AuthorizationType: NONE
+      OperationName: DisconnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref MainServerIntegration
 
 #------ Show outputs of resources ------#
 Outputs:
