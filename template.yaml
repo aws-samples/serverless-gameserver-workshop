@@ -287,7 +287,7 @@ Outputs:
     Value: !Join [ '',
       [
         'wss://', !Ref MainEntry, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage', ' ',
-        '[]'
+        '[joinroom]'
       ]
     ]
   ShowPlayerInfoLog:
@@ -296,3 +296,6 @@ Outputs:
   ShowMainServerLog:
     Description: "tail MainServer log"
     Value: !Join [ '', ['aws logs tail /aws/lambda/', !Ref MainServerFunction, ' --format short --follow'] ]
+  ShowRoomMgrLog:
+    Description: "tail RoomMgr log"
+    Value: !Join [ '', ['aws logs tail /aws/lambda/', !Ref RoomMgrFunction, ' --format short --follow'] ]
