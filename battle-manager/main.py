@@ -1,4 +1,109 @@
 import json
+import boto3
+import os
+
+main_server_table = boto3.resource('dynamodb').Table('main_server')
+common_resources_table = boto3.resource('dynamodb').Table('common_resources')
+
+# Get main_server_api_url from environment variables
+main_server_api_url_prefix = os.environ['MainServerAPIUrlPrefix']
+region = os.environ['AWS_REGION']
+main_server_api_url = f"https://{main_server_api_url_prefix}.execute-api.{region}.amazonaws.com/dev"
+
+# get connection_id from user_id
+# we use iteration here, you should use indexes in your production environment for better performance
+def getConnIDFromUserID(user_id):
+    connection_ids = []
+    scan_response = main_server_table.scan(ProjectionExpression='connection_id')
+    connection_ids = [item['connection_id'] for item in scan_response['Items']]
+    for connection_id in connection_ids:
+        if getUserIDFromConnID(connection_id) == user_id:
+            return connection_id
+    logger.error("Cannot get connection_id, user_id=%s" % (user_id))
+    return -1
+
+def server_response(connection_id, message):
+    apig_management_client = boto3.client('apigatewaymanagementapi',endpoint_url=main_server_api_url)
+    send_response = apig_management_client.post_to_connection(Data=message, ConnectionId=connection_id)
+
+# get user_id from connection_id
+def getUserIDFromConnID(connection_id):
+    item_response = main_server_table.get_item(Key={'connection_id': connection_id})
+    if 'Item' in item_response:
+        user_id = item_response['Item']['user_id']
+    else:
+        user_id = None
+    return user_id
+
+# get room_name from user_id
+def getRoomNameFromUserId(user_id):
+    player_room_key = "%s_in_room" % user_id
+    item_response = common_resources_table.get_item(Key={'resource_name': player_room_key})
+    if 'Item' in item_response:
+        room_name = item_response['Item']['room_name']
+    else:
+        room_name = None
+    return room_name
+
+# get peer user_id from user_id and room_name
+def getPeerPlayerIDFromRoom(user_id, room_name):
+    item_response = common_resources_table.get_item(Key={'resource_name': room_name})
+    players_in_room = item_response['Item']['players_in_room']
+    for player_id in players_in_room:
+        if player_id != user_id:
+            return player_id
+
+# get battle info
+def battleMgrPrecheck(connection_id):
+    user_id = getUserIDFromConnID(connection_id)
+    room_name = getRoomNameFromUserId(user_id)
+    peer_player_id = getPeerPlayerIDFromRoom(user_id, room_name)
+    return (user_id, room_name, peer_player_id)
+
+# battle settlement
+def battle_settlement(battle_players, room_name):
+    user_id_1 = battle_players[0]
+    user_id_2 = battle_players[1]
+
+    in_battle_score_1 = int(common_resources_table.get_item(Key={'resource_name': "%s_in_battle_score" % user_id_1})['Item']['score'])
+    in_battle_score_2 = int(common_resources_table.get_item(Key={'resource_name': "%s_in_battle_score" % user_id_2})['Item']['score'])
+
+    winner_id = None
+    if in_battle_score_1 > in_battle_score_2:
+        winner_id = user_id_1
+    elif in_battle_score_1 < in_battle_score_2:
+        winner_id = user_id_2
+
+    message = '{"action":"battle_settlement", "data":"UNKNOW"}'
+    for user_id in battle_players:
+        in_battle_score = int(common_resources_table.get_item(Key={'resource_name': "%s_in_battle_score" % user_id})['Item']['score'])
+        connection_id = getConnIDFromUserID(user_id)
+        if winner_id == None:
+            message = '{"action":"battle_settlement", "data":"DRAW"}'
+            print("Battle DRAW, user_id=%s, score=%d" % (user_id, in_battle_score))
+        elif user_id == winner_id:
+            message = '{"action":"battle_settlement", "data":"WIN"}'
+            print("Battle WIN, user_id=%s, score=%d" % (user_id, in_battle_score))
+        else:
+            message = '{"action":"battle_settlement", "data":"LOSE"}'
+            print("Battle LOSE, user_id=%s, score=%d" % (user_id, in_battle_score))
+        server_response(connection_id, message)
+
+    clear_battle_data(battle_players, room_name)
+
+# clear battle data
+def clear_battle_data(battle_players, room_name):
+    for user_id in battle_players:
+        common_resources_table.delete_item(Key={'resource_name': "%s_in_battle_score" % user_id})
+        common_resources_table.delete_item(Key={'resource_name': "%s_in_battle_die" % user_id})
+
+    with common_resources_table.batch_writer() as batch:
+        item_response = common_resources_table.get_item(Key={'resource_name': room_name})
+        players_in_room = item_response['Item']['players_in_room']
+        for user_id in players_in_room:
+            batch.delete_item(Key={"resource_name":"%s_in_room" % user_id})
+        batch.delete_item(Key={"resource_name":room_name})
+    print("All battle data cleared. room_name=%s, user_id=%s" % (room_name, battle_players))
 
 def main_handler(event, context):
     try:
