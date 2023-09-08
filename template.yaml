@@ -175,3 +175,11 @@ Outputs:
         '[create_user, delete_user]'
       ]
     ]
+  MainEntryURI:
+    Description: "API Gateway endpoint URL for MainServer"
+    Value: !Join [ '',
+      [
+        'wss://', !Ref MainEntry, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage', ' ',
+        '[]'
+      ]
+    ]
