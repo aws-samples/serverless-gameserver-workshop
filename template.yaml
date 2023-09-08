@@ -64,6 +64,6 @@ Outputs:
     Value: !Join [ '',
       [
         'https://', !Ref PlayerMgr, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/dev', ' ',
-        '[create_user]'
+        '[create_user, delete_user]'
       ]
     ]
