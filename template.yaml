@@ -192,6 +192,9 @@ Resources:
         - arm64
       Policies:
         - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          MainServerAPIUrlPrefix: !Ref MainEntry
 
   # Associate APIGateway with Lambda
   RoomMgrIntegration:
