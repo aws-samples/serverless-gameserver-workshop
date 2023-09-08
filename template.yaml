@@ -183,3 +183,9 @@ Outputs:
         '[]'
       ]
     ]
+  ShowPlayerInfoLog:
+    Description: "tail PlayerInfo log"
+    Value: !Join [ '', ['aws logs tail /aws/lambda/', !Ref PlayerInfoFunction, ' --format short --follow'] ]
+  ShowMainServerLog:
+    Description: "tail MainServer log"
+    Value: !Join [ '', ['aws logs tail /aws/lambda/', !Ref MainServerFunction, ' --format short --follow'] ]
