@@ -156,6 +156,15 @@ Resources:
         - - 'integrations'
           - !Ref MainServerIntegration
 
+  MainServerPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MainEntry
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MainServerFunction
+      Principal: apigateway.amazonaws.com
+
 #------ Show outputs of resources ------#
 Outputs:
   PlayerMgrURI:
