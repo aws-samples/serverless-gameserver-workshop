@@ -25,6 +25,8 @@ Resources:
       Runtime: python3.9 # Lambda runtime, support NodeJS, Python, Java, Golang
       Architectures: # CPU arch
         - arm64 # Recommand ARM
+      Policies:
+        - AmazonDynamoDBFullAccess
       Events: # Lambda trigger
         CreateUserEvent: # Name
           Type: Api
