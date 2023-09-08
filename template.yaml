@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Serverless-GameServer-Workshop
+
+Globals:
+  Function:
+    Timeout: 300 # Lambda function timeout, second
+
+# All resources will be defined in the SAM template
+# SAM will create a cloudformation to manage all resources
+Resources:
+  PlayerMgr: # Resource name
+    Type: AWS::Serverless::Api # Resource type, APIGateway
+    Properties:
+      Name: Workshop-PlayerMgr # APIGATEWAY name
+      StageName: dev
+
+  PlayerInfoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 'Player Info'
+      CodeUri: player-manager/ # Lambda function code path
+      Handler: main.main_handler # Lambda function method
+      Runtime: python3.9 # Lambda runtime, support NodeJS, Python, Java, Golang
+      Architectures: # CPU arch
+        - arm64 # Recommand ARM
+      Events: # Lambda trigger
+        CreateUserEvent: # Name
+          Type: Api
+          Properties:
+            Path: /create_user
+            Method: post
+            RestApiId: !Ref PlayerMgr
+
