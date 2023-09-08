@@ -10,6 +10,8 @@ Globals:
 # All resources will be defined in the SAM template
 # SAM will create a cloudformation to manage all resources
 Resources:
+
+  ###--- HTTP Service ---###
   PlayerMgr: # Resource name
     Type: AWS::Serverless::Api # Resource type, APIGateway
     Properties:
@@ -68,6 +70,19 @@ Resources:
       SSESpecification:
         SSEEnabled: True # Server Side Encryption
       TableName: "player_info" # DDB table name
+
+  ###--- Websocket Service ---###
+  MainServerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 'Handle all connections'
+      CodeUri: main-server/
+      Handler: main.main_handler
+      Runtime: python3.9
+      Architectures:
+        - arm64
+      Policies:
+        - AmazonDynamoDBFullAccess
 
 #------ Show outputs of resources ------#
 Outputs:
