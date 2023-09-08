@@ -276,6 +276,79 @@ Resources:
         SSEEnabled: True
       TableName: "common_resources"
 
+  # Battle manager function
+  BattleMgrFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 'Battle'
+      CodeUri: battle-manager/
+      Handler: main.main_handler
+      Runtime: python3.9
+      Architectures:
+        - arm64
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+
+  BattleMgrIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MainEntry
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join
+        - ''
+        - - 'arn:'
+          - !Ref AWS::Partition
+          - ':apigateway:'
+          - !Ref AWS::Region
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt BattleMgrFunction.Arn
+          - '/invocations'
+
+  AttackRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "attack"
+      AuthorizationType: NONE
+      OperationName: AttackRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BattleMgrIntegration
+
+  DieRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "die"
+      AuthorizationType: NONE
+      OperationName: DieRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BattleMgrIntegration
+  SyncScoreRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MainEntry
+      RouteKey: "syncscore"
+      AuthorizationType: NONE
+      OperationName: SyncScoreRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BattleMgrIntegration
+
+  BattleMgrPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MainEntry
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BattleMgrFunction
+      Principal: apigateway.amazonaws.com
+
 #------ Show outputs of resources ------#
 Outputs:
   PlayerMgrURI:
