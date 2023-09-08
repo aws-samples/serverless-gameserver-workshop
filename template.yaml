@@ -165,6 +165,22 @@ Resources:
       FunctionName: !Ref MainServerFunction
       Principal: apigateway.amazonaws.com
 
+  MainServerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "connection_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "connection_id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: True
+      TableName: "main_server"
+
 #------ Show outputs of resources ------#
 Outputs:
   PlayerMgrURI:
