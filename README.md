@@ -16,9 +16,10 @@ Get ready to dive into the world of serverless game development and unleash the 
 
 ![arch](Docs/images/arch.jpeg)
 
-
-
 ## Workshop Docs
 
-https://github.com/aws-samples/serverless-gameserver-workshop/tree/main/Docs
+AWS Workshop Studio: [AWS Serverless Gameserver Workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/289860e1-fb72-4a89-8691-d4ded671c904/en-US/introduction)
 
+This workshop was held at AWS 2023 APJC Tech Summit
+
+![apjc-logo](Docs/images/apjc-2023.png)
